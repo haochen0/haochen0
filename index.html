@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的学术笔记</title>
+    
+    <!-- 引入 LaTeX 风格的 CSS 核心库 -->
+    <!-- 这个链接是托管在 Vercel 上的，非常快速稳定 -->
+    <link rel="stylesheet" href="https://latex.now.sh/style.css">
+    
+    <!-- 中文字体优化（可选，但推荐，以保证中文阅读体验） -->
+    <style>
+        body { 
+            /* 优先使用 LaTeX 的默认字体，中文回退到宋体 */
+            font-family: "Latin Modern Roman", "Noto Serif SC", serif; 
+        }
+        header h1 {
+             /* 调整主标题的间距，模仿论文标题 */
+            line-height: 1.2;
+            margin-bottom: 0.5em;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 标题部分：模仿论文的作者/机构信息 -->
+    <header>
+        <h1>张三的思考与记录</h1>
+        <p class="author">张三 (San Zhang) <br> 某大学 计算机科学系</p>
+        <p class="date">更新日期: 2023年11月</p>
+    </header>
+
+    <!-- 摘要/简介 -->
+    <section>
+        <h2>摘要 (Abstract)</h2>
+        <p>
+            本网站记录了作者在算法、系统架构和个人成长方面的心得体会。整体采用 $\LaTeX$ 风格排版，力求简洁、严谨的阅读体验。
+        </p>
+    </section>
+
+    <!-- 目录/文章列表 -->
+    <section>
+        <h2>目录 (Contents)</h2>
+        <!-- 使用描述列表 (dl) 模拟论文目录 -->
+        <dl>
+            <dt><strong>1. <a href="article1.html">社会选择的演化路径</a></strong></dt>
+            <dd>对现代社会中，个人价值评估标准从自然选择到社会选择的转变进行分析。</dd>
+
+            <dt><strong>2. <a href="#">异步编程的陷阱 (待完成)</a></strong></dt>
+            <dd>探讨在多核时代，如何正确使用并发和异步模型。</dd>
+        </dl>
+    </section>
+
+</body>
+</html>
