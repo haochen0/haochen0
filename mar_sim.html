@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulation Report: The Mars-less Earth Hypothesis</title>
+    <!-- Google Fonts for LaTeX-like typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #fdfdfd;
+            --text-color: #2c3e50;
+            --heading-color: #1a1a1a;
+            --accent-color: #c0392b;
+            --border-color: #e0e0e0;
+            --table-header-bg: #f8f9fa;
+            --latex-width: 850px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Crimson Pro', serif;
+            line-height: 1.8;
+            color: var(--text-color);
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 40px 20px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .paper {
+            background-color: var(--bg-color);
+            max-width: var(--latex-width);
+            margin: 0 auto;
+            padding: 80px 100px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            position: relative;
+            counter-reset: section;
+        }
+
+        /* LaTeX Section Numbering */
+        h2 {
+            counter-increment: section;
+            margin-top: 2em;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            color: var(--heading-color);
+        }
+        h2::before {
+            content: counter(section) ". ";
+            margin-right: 10px;
+        }
+
+        h3 {
+            margin-top: 1.5em;
+            color: #333;
+        }
+
+        .report-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .report-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--heading-color);
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+
+        .metadata {
+            text-align: left;
+            border-left: 3px solid var(--accent-color);
+            padding: 15px 25px;
+            background: #fffafa;
+            margin: 30px 0;
+            font-size: 0.95rem;
+        }
+
+        .metadata p {
+            margin: 5px 0;
+        }
+
+        .metadata strong {
+            color: var(--accent-color);
+        }
+
+        /* LaTeX Style Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            font-size: 0.95rem;
+        }
+
+        th {
+            background-color: var(--table-header-bg);
+            border-top: 2px solid var(--heading-color);
+            border-bottom: 1px solid var(--heading-color);
+            padding: 12px;
+            text-align: left;
+            font-weight: 700;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
+        }
+
+        tr:last-child td {
+            border-bottom: 2px solid var(--heading-color);
+        }
+
+        /* Abstract/Callout Style */
+        .callout {
+            margin: 30px 0;
+            padding: 20px;
+            border-radius: 4px;
+            font-style: italic;
+        }
+
+        .callout-important {
+            background: #fff8e1;
+            border: 1px solid #ffe082;
+            color: #856404;
+        }
+
+        .callout-note {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            color: #0d47a1;
+        }
+
+        .callout-caution {
+            background: #ffebee;
+            border: 1px solid #ffcdd2;
+            color: #b71c1c;
+        }
+
+        .figure-caption {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 10px;
+            font-style: italic;
+            text-align: center;
+        }
+
+        .code-block {
+            background: #f8f9fa;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin: 25px 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+        .brain-curve {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent-color);
+        }
+
+        .conclusion {
+            margin-top: 60px;
+            border-top: 2px double var(--border-color);
+            padding-top: 40px;
+            font-size: 1.1rem;
+            text-align: justify;
+        }
+
+        .conclusion p {
+            margin-bottom: 1.5em;
+        }
+
+        .footer {
+            margin-top: 80px;
+            font-size: 0.85rem;
+            color: #777;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            margin: 40px 0;
+        }
+
+        @media (max-width: 768px) {
+            .paper {
+                padding: 40px 30px;
+            }
+            body {
+                padding: 20px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="paper">
+    <div class="report-header">
+        <h1 class="report-title">The "Remove Mars" Earth Simulation: <br/>A Dual-Cycle Coupling Analysis</h1>
+        <p><em>Academic Report No. 1138 · Earth System Science Division</em></p>
+    </div>
+
+    <div class="metadata">
+        <p><strong>Simulation Protocol:</strong> Remove Mars v2.0 — Dual-Cycle Coupling Model</p>
+        <p><strong>Initial Epoch:</strong> Onset of the Pleistocene (~2.6 Ma)</p>
+        <p><strong>Primary Variable:</strong> Removal of all Martian gravitational perturbations on Earth's orbit</p>
+        <p><strong>Disrupted Cycles:</strong> ① ~100 kyr Glacial-Interglacial Cycle | ② ~2.4 Myr Grand Climate Cycle</p>
+        <p><strong>Projection Timeline:</strong> 2.6 Ma to Present Day</p>
+    </div>
+
+    <h2>Theoretical Framework: The Dual-Cycle Coupling</h2>
+    <p>Before examining the simulation data, we must define the fundamental roles of these two periodicities in Earth's climatic stability.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Dimension</th>
+                <th>100 kyr Cycle (Glacial Pacing)</th>
+                <th>2.4 Myr Grand Cycle</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Mechanism</strong></td>
+                <td>Martian gravity modulates orbital eccentricity, amplifying Milankovitch cycles</td>
+                <td>Long-term Earth-Mars resonance, modulating ultra-long solar radiation rhythms</td>
+            </tr>
+            <tr>
+                <td><strong>Analogy</strong></td>
+                <td>The "Metronome" of climate oscillation</td>
+                <td>The "Deep Bass Drum" of the planetary pulse</td>
+            </tr>
+            <tr>
+                <td><strong>Primary Domain</strong></td>
+                <td>Surface climate, ice sheets, sea levels, land bridges</td>
+                <td>Deep-sea circulation, carbon cycle, species turnover</td>
+            </tr>
+            <tr>
+                <td><strong>Evolutionary Impact</strong></td>
+                <td>Triggers rapid cognitive adaptation in hominids</td>
+                <td>Maintains the long-term ecological "vivacity" of Earth</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="callout callout-important">
+        <strong>Abstract:</strong> These cycles do not operate in isolation. The 2.4 Myr Grand Cycle serves as the foundational substrate upon which the 100 kyr glacial "ripples" oscillate. Removing Mars simultaneously eliminates both the "Bass Drum" and the "Metronome," reducing Earth's grand climatic symphony to a flat, monotonous white noise.
+    </div>
+
+    <h2>Chronological Simulation Data</h2>
+
+    <h3>📍 Phase 0: Initial Boundary Conditions (~2.6 Ma)</h3>
+    <div class="code-block">
+Baseline Universe (Historical):
+├── Entrance into Pleistocene; cyclic expansion of Northern Hemisphere ice sheets
+├── Climate oscillation dominated by 41 kyr obliquity pacing
+├── Australopithecus active in East Africa
+└── Periodic deep-sea "flushing" regulated by 2.4 Myr Grand Cycle
+
+Mars-less Universe (Initial Deviation):
+├── Damped amplitude in eccentricity → Smoothed insolation variability
+└── Absence of 2.4 Myr signal → Deep-sea "conveyor" loses periodic activation
+    </div>
+
+    <h3>📍 Phase 1: Latent Divergence (~2.6—2.0 Ma)</h3>
+    <p>Surface conditions remain ostensibly similar to the baseline, but internal dynamics begin to drift. The rhythmic weathering of silicate rocks—Earth's natural CO₂ thermostat—loses its multi-million-year calibration. Feedback loops begin to lose their "harmonic resonance."</p>
+
+    <h3>📍 Phase 2: Accelerated Bifurcation (~2.0—1.0 Ma)</h3>
+    <p><strong>Collapse of Benthic Oxygenation:</strong> In the Mars-less simulation, deep-sea circulation increasingly stagnates. Without the periodic "vigour" provided by the Grand Cycle, bottom waters begin to stratify. Chronic Anoxic Events become widespread, leading to a catastrophic contraction of deep-sea biodiversity.</p>
+    <p><strong>The Stagnation Trap:</strong> Early <em>Homo</em> populations show a marked deceleration in encephalization. Without the pulse of extreme glacial cycles forcing technological innovation, hominids remain in "ecologically stable" zones, their evolutionary trajectory hitting a premature plateau.</p>
+
+    <h2>The Absence of the Mid-Pleistocene Transition</h2>
+    <div class="callout callout-caution">
+        <strong>Critical Insight:</strong> Historically, ~1.0 Ma marked the "Mid-Pleistocene Transition" (MPT), shifting glacial cycles from 41 kyr to high-amplitude 100 kyr. Our simulation confirms that without Martian perturbation, this vital transition never occurs.
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Parameters</th>
+                <th>Baseline Universe (With Mars)</th>
+                <th>Mars-less Simulation</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Ice Volume</strong></td>
+                <td>Continental ice sheets 3-4km thick</td>
+                <td>Thin, ephemeral ice; no continental glaciation</td>
+            </tr>
+            <tr>
+                <td><strong>Sea Level Drop</strong></td>
+                <td>Drops of >120m during glacials</td>
+                <td>Fluctuations limited to 20-40m</td>
+            </tr>
+            <tr>
+                <td><strong>Land Bridges</strong></td>
+                <td>Beringia, Sundaland, Doggerland exposed</td>
+                <td><strong>Permanently Submerged</strong> — Ocean barriers stay intact</td>
+            </tr>
+            <tr>
+                <td><strong>Cognitive Selection</strong></td>
+                <td>High environmental volatility prizes general intelligence</td>
+                <td>Stable climate promotes physical specialization</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="hero-image">
+        <div class="mermaid">
+graph TB
+    subgraph Baseline["🌍 Baseline (Historical)"]
+        A1["Homo Sapiens Exodus<br/>~70 kya"] --> B1["Entry into Eurasia"]
+        B1 --> C1["Cross Beringia<br/>into Americas"]
+        B1 --> D1["Via Sundaland<br/>into Australia"]
+    end
+
+    subgraph MarsLess["🔴 Mars-less Simulation"]
+        A2["Homo Erectus descendants<br/>Slow dispersal"] --> B2["Trapped in Afro-Eurasia"]
+        B2 --> C2["❌ Bering Strait<br/>Remains Open Ocean"]
+        B2 --> D2["❌ Australia<br/>Forever Inaccessible"]
+    end
+        </div>
+        <div class="figure-caption">Figure 1: Comparison of global dispersal patterns and land bridge accessibility.</div>
+    </div>
+
+    <h2>The Encephalization "Ceiling"</h2>
+    <p>According to the <em>Variability Selection Hypothesis</em> (Potts, 1996), intelligence is an adaptation to environmental instability. In the smoothed climate of a Mars-less Earth, the "evolutionary whetstone" for the human brain is absent.</p>
+    <div class="code-block brain-curve">
+Mars-less Universe Cranial Capacity (Estimated):
+~2.0 Ma  ███ (600 cc)
+~1.0 Ma  ████ (750 cc)
+~0.5 Ma  █████ (850 cc)
+~Modern  █████ (900 cc) → Terminal Stagnation
+    </div>
+
+    <h2>The Permanent Absence of Civilization</h2>
+    <p>The Neolithic Revolution required four converging conditions: the abrupt end of the Last Glacial Period, megafaunal extinction, demographic pressure, and cognitive readiness. In the Mars-less world, **zero** of these conditions are met.</p>
+
+    <h2>Synthesis and Philosophical Implications</h2>
+    <div class="conclusion">
+        <p>Mars possesses only one-tenth the mass of Earth, yet from a distance of 78 million kilometers, it plucks two invisible gravitational strings that have determined the destiny of terrestrial life.</p>
+        <p>The <strong>100,000-year string</strong> ignited the spark of human civilization through environmental adversity. The <strong>2.4-million-year string</strong> maintains the long-term metabolic respiration of Earth as a "living planet." Sever either string, and civilization never emerges. Sever both, and Earth becomes a silent, pale blue rock—possessing oceans and an atmosphere, but devoid of the complexity of history.</p>
+    </div>
+
+    <div class="footer">
+        <p><strong>Primary Scientific References:</strong></p>
+        <ul>
+            <li>Potts, R. (1996). <em>Variability Selection in Hominid Evolution</em>. Evolutionary Anthropology.</li>
+            <li>Kane, S. et al. <em>Stochastic Effects of Martian Perturbations on Earth's Orbital Eccentricity</em>.</li>
+            <li>Dutkiewicz, A. & Müller, D. (2024). <em>Deep-sea hiatus rhythms and the 2.4 Myr cycle</em>. Nature Communications.</li>
+        </ul>
+        <p>© 2026 Antigravity Research Laboratory · Simulation Data Ver. 2.0.4</p>
+    </div>
+</div>
+
+<script>
+    mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+</script>
+
+</body>
+</html>
