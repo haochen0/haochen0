@@ -146,15 +146,28 @@
                 transform: translateX(5px);
             }
         }
+
+        /* Loading skeleton */
+        .loading {
+            position: relative;
+            pointer-events: none;
+            opacity: 0.6;
+        }
     </style>
 </head>
 
 <body>
 
     <div class="portal-card" id="gatekeeper">
-        <h1>ACCESS GATE</h1>
-        <input type="password" id="access-code" placeholder="000000" maxlength="6">
-        <p class="hint">T-CODE [MMDD+99] REQUIRED</p>
+        <h1 id="gate-title">VAULT LOCKED</h1>
+        <div id="master-pass-step">
+            <input type="password" id="master-password" placeholder="MASTER PASSWORD" style="letter-spacing: 1px; margin-bottom: 20px;">
+            <button onclick="unlockVault()" style="background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 600; width: 100%;">UNLOCK GATE</button>
+        </div>
+        <div id="totp-step" style="display: none;">
+            <input type="password" id="access-code" placeholder="000000" maxlength="6">
+            <p class="hint">SYNCING AUTHENTICATOR...</p>
+        </div>
     </div>
 
     <div class="portal-card" id="secret-content">
@@ -174,50 +187,45 @@
 
     <script>
         const gate = document.getElementById('gatekeeper');
+        const gateTitle = document.getElementById('gate-title');
+        const masterStep = document.getElementById('master-pass-step');
+        const totpStep = document.getElementById('totp-step');
+        const masterInput = document.getElementById('master-password');
+        const totpInput = document.getElementById('access-code');
         const content = document.getElementById('secret-content');
-        const input = document.getElementById('access-code');
-        const hintText = document.querySelector('.hint');
+        const hintText = totpStep.querySelector('.hint');
 
         let MASTER_PASS = "";
         let DECRYPTED_TOTP_SECRET = "";
 
-        // TOTP secret encrypted with your Master Password
-        // Ensure this is updated via the encryptor tool whenever the secret changes.
         const ENCRYPTED_VAULT_DATA = "U2FsdGVkX191NL2L5OOdKt9ijr+MDtxMcetwfRXQDUZWkAkBPSFaRjMMKMJnaWCH";
 
-        // Initial State: Ask for Master Password
-        window.onload = () => {
-            let pass = prompt("ENTER MASTER PASSWORD TO DECRYPT VAULT:");
-            if (!pass) {
-                document.body.innerHTML = "<h1 style='text-align:center;margin-top:20%'>ACCESS DENIED</h1>";
-                return;
-            }
-            
-            MASTER_PASS = pass.trim(); // Handle accidental spaces
+        function unlockVault() {
+            const pass = masterInput.value.trim();
+            if (!pass) return;
 
             try {
-                // 1. Attempt Decryption
-                const bytes = CryptoJS.AES.decrypt(ENCRYPTED_VAULT_DATA, MASTER_PASS);
-                DECRYPTED_TOTP_SECRET = bytes.toString(CryptoJS.enc.Utf8);
+                const bytes = CryptoJS.AES.decrypt(ENCRYPTED_VAULT_DATA, pass);
+                const secret = bytes.toString(CryptoJS.enc.Utf8);
 
-                if (!DECRYPTED_TOTP_SECRET) {
-                    throw new Error("Incorrect Password");
-                }
-            } catch (e) {
-                alert("❌ INVALID MASTER PASSWORD. VAULT REMAINS LOCKED.");
-                document.body.innerHTML = "<h1 style='text-align:center;margin-top:20%'>ENCRYPTION ERROR</h1>";
-                return;
-            }
+                if (!secret) throw new Error("Wrong Password");
 
-            try {
-                // 2. Initialize TOTP (Separate block to catch malformed secrets)
+                // Success
+                MASTER_PASS = pass;
+                DECRYPTED_TOTP_SECRET = secret;
+                
+                masterStep.style.display = 'none';
+                totpStep.style.display = 'block';
+                gateTitle.innerText = "IDENTITY CHECK";
                 initTOTP();
             } catch (e) {
-                console.error(e);
-                alert("❌ VAULT DECRYPTED BUT AUTHENTICATOR FAILED [Check TOTP Secret Format]");
-                document.body.innerHTML = "<h1 style='text-align:center;margin-top:20%'>AUTHENTICATION ERROR</h1>";
+                masterInput.classList.add('error-shake');
+                setTimeout(() => masterInput.classList.remove('error-shake'), 400);
             }
-        };
+        }
+
+        // Allow Enter key
+        masterInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') unlockVault(); });
 
         function initTOTP() {
             const totp = new OTPAuth.TOTP({
@@ -229,16 +237,16 @@
             setInterval(() => {
                 const now = Math.floor(Date.now() / 1000);
                 const remaining = 30 - (now % 30);
-                hintText.innerText = `SYNCED WITH AUTHENTICATOR [${remaining}s]`;
+                hintText.innerText = `[${remaining}s] REMAINING`;
             }, 1000);
 
-            input.addEventListener('input', (e) => {
+            totpInput.addEventListener('input', (e) => {
                 if (e.target.value.length === 6) {
-                    if (totp.validate({ token: e.target.value, window: 1 }) !== null) {
+                    if (totp.validate({ token: e.target.value, window: 2 }) !== null) {
                         revealVault();
                     } else {
-                        input.classList.add('error-shake');
-                        setTimeout(() => { input.classList.remove('error-shake'); input.value = ''; }, 400);
+                        totpInput.classList.add('error-shake');
+                        setTimeout(() => { totpInput.classList.remove('error-shake'); totpInput.value = ''; }, 400);
                     }
                 }
             });
@@ -272,34 +280,45 @@
             const originalText = btn.innerText;
             btn.innerText = "⏳ DECRYPTING...";
             btn.style.pointerEvents = "none";
+            btn.closest('.secret-reveal').classList.add('loading');
 
             try {
-                // Fetch the encrypted .enc file (which is a base64 string)
                 const response = await fetch(url);
                 if (!response.ok) throw new Error("File not found on server");
                 const encryptedData = await response.text();
 
                 // Decrypt using our Master Password
-                const decryptedBytes = CryptoJS.AES.decrypt(encryptedData, MASTER_PASS);
-                const decryptedHex = decryptedBytes.toString(CryptoJS.enc.Hex);
+                const decrypted = CryptoJS.AES.decrypt(encryptedData, MASTER_PASS);
+                
+                // Efficient WordArray to Uint8Array conversion (avoiding giant strings/hex)
+                const l = decrypted.sigBytes;
+                if (l <= 0) throw new Error("Decryption failed. Check password.");
+                
+                const words = decrypted.words;
+                const typedArray = new Uint8Array(l);
+                for (let i = 0; i < l; i++) {
+                    typedArray[i] = (words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
+                }
 
-                if (!decryptedHex) throw new Error("Decryption failed. Check password.");
-
-                // Convert Hex to Byte Array for Blob
-                const typedArray = new Uint8Array(decryptedHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
                 const blob = new Blob([typedArray], { type: 'application/pdf' });
-
+                const blobUrl = window.URL.createObjectURL(blob);
+                
                 // Trigger Download
                 const link = document.createElement('a');
-                link.href = window.URL.createObjectURL(blob);
+                link.href = blobUrl;
                 link.download = outputName;
+                document.body.appendChild(link);
                 link.click();
+                document.body.removeChild(link);
 
                 btn.innerText = "✅ DOWNLOADED";
+                setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
             } catch (e) {
-                alert("ERROR: " + e.message);
+                console.error(e);
+                alert("DECRYPTION ERROR: " + e.message);
                 btn.innerText = "❌ FAILED";
             } finally {
+                btn.closest('.secret-reveal').classList.remove('loading');
                 setTimeout(() => {
                     btn.innerText = originalText;
                     btn.style.pointerEvents = "auto";
