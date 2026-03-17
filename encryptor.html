@@ -66,22 +66,40 @@
         const password = passwordInput.value;
         if (!password) { alert("Please enter a Master Password first!"); return; }
 
-        status.innerText = "Encrypting...";
+        status.innerText = `Preparing ${files.length} file(s)...`;
+        let processedCount = 0;
+
         for (let file of files) {
             const li = document.createElement('li');
-            li.innerText = `🔒 ${file.name}`;
+            li.innerText = `⏳ Processing: ${file.name}`;
             fileList.appendChild(li);
 
             const reader = new FileReader();
             reader.onload = async (e) => {
-                const wordArray = CryptoJS.lib.WordArray.create(e.target.result);
-                const encrypted = CryptoJS.AES.encrypt(wordArray, password).toString();
-                
-                download(encrypted, `${file.name}.enc`);
+                try {
+                    const wordArray = CryptoJS.lib.WordArray.create(e.target.result);
+                    const encrypted = CryptoJS.AES.encrypt(wordArray, password).toString();
+                    
+                    download(encrypted, `${file.name}.enc`);
+                    li.innerText = `✅ Encrypted: ${file.name}.enc`;
+                    
+                    processedCount++;
+                    status.innerText = `Encrypted ${processedCount} of ${files.length}...`;
+                    if (processedCount === files.length) {
+                        status.innerText = "All files done! Check your Downloads folder.";
+                    }
+                } catch (err) {
+                    console.error(err);
+                    li.innerText = `❌ Error: ${file.name}`;
+                    li.style.color = "#ff4757";
+                }
+            };
+            reader.onerror = () => {
+                li.innerText = `❌ Error reading: ${file.name}`;
+                li.style.color = "#ff4757";
             };
             reader.readAsArrayBuffer(file);
         }
-        status.innerText = "Done! Check Downloads.";
     }
 
     function download(data, filename) {
