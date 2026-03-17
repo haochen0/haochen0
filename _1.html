@@ -201,7 +201,8 @@
         const ENCRYPTED_VAULT_DATA = "U2FsdGVkX191NL2L5OOdKt9ijr+MDtxMcetwfRXQDUZWkAkBPSFaRjMMKMJnaWCH";
 
         function unlockVault() {
-            const pass = masterInput.value.trim();
+            // Removed .trim() to ensure passwords with intended spaces/special chars work correctly
+            const pass = masterInput.value;
             if (!pass) return;
 
             try {
@@ -209,7 +210,7 @@
                 const secret = bytes.toString(CryptoJS.enc.Utf8);
 
                 // CryptoJS returns empty string if decryption fails or salt is missing
-                if (!secret || secret.length < 4) throw new Error("Wrong Password");
+                if (!secret || secret.length < 4) throw new Error("Wrong Password or Invalid Secret");
 
                 // Success
                 MASTER_PASS = pass;
@@ -276,13 +277,13 @@
                 <div style="text-align:left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px;">
                     <p style="border-bottom: 1px solid var(--border); padding-bottom:10px; margin-bottom:15px;">🔐 <strong>ENCRYPTED ARCHIVE</strong></p>
                     
-                    <a href="javascript:void(0)" onclick="decryptFile('pdf_uploads/Prompt Engineering_v7.pdf.enc', 'Prompt Engineering_v7.pdf')" 
+                    <a href="javascript:void(0)" onclick="handleDecryptClick(event, 'pdf_uploads/Prompt Engineering_v7.pdf.enc', 'Prompt Engineering_v7.pdf')" 
                        style="color:#007bff; display:block; margin: 12px 0; text-decoration:none;">🔓 Prompt Engineering v7</a>
                     
-                    <a href="javascript:void(0)" onclick="decryptFile('pdf_uploads/Transformers for Machine Learning_A Deep Dive.pdf.enc', 'Transformers_Tutorial.pdf')" 
+                    <a href="javascript:void(0)" onclick="handleDecryptClick(event, 'pdf_uploads/Transformers for Machine Learning_A Deep Dive.pdf.enc', 'Transformers_Tutorial.pdf')" 
                        style="color:#007bff; display:block; margin: 12px 0; text-decoration:none;">🔓 Transformers Deep Dive</a>
                     
-                    <a href="javascript:void(0)" onclick="decryptFile('pdf_uploads/塞思·卡拉曼 安全边际 中文版.pdf.enc', 'Margin_of_Safety_CN.pdf')" 
+                    <a href="javascript:void(0)" onclick="handleDecryptClick(event, 'pdf_uploads/塞思·卡拉曼 安全边际 中文版.pdf.enc', 'Margin_of_Safety_CN.pdf')" 
                        style="color:#007bff; display:block; margin: 12px 0; text-decoration:none;">🔓 Margin of Safety (CN)</a>
                     
                     <p style="font-size: 0.7rem; color: #666; margin-top:20px;">[AES-256-DECRYPTION READY]</p>
@@ -290,35 +291,49 @@
             `;
         }
 
-        async function decryptFile(url, outputName) {
-            const btn = event.target;
+        // Wrapper to pass the event object safely
+        function handleDecryptClick(e, url, outputName) {
+            decryptFile(url, outputName, e.currentTarget || e.target);
+        }
+
+        async function decryptFile(url, outputName, btn) {
+            if (!btn) return;
             const originalText = btn.innerText;
             btn.innerText = "⏳ DECRYPTING...";
             btn.style.pointerEvents = "none";
-            btn.closest('.secret-reveal').classList.add('loading');
+            const container = btn.closest('.secret-reveal') || document.getElementById('payload');
+            container.classList.add('loading');
 
             try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error("File not found on server");
-                const encryptedData = await response.text();
+                // Ensure URL is encoded for files with spaces/special chars
+                const response = await fetch(encodeURI(url));
+                if (!response.ok) throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                
+                let encryptedData = await response.text();
+                encryptedData = encryptedData.trim(); // Remove any trailing/leading whitespace
 
                 // Decrypt using our Master Password
                 const decrypted = CryptoJS.AES.decrypt(encryptedData, MASTER_PASS);
                 
-                // Efficient WordArray to Uint8Array conversion (avoiding giant strings/hex)
                 const l = decrypted.sigBytes;
-                if (l <= 0) throw new Error("Decryption failed. Check password.");
+                if (l <= 0) throw new Error("Decryption failed. Please verify your Master Password or file integrity.");
                 
+                // Efficient WordArray to Uint8Array conversion
                 const words = decrypted.words;
                 const typedArray = new Uint8Array(l);
                 for (let i = 0; i < l; i++) {
                     typedArray[i] = (words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
                 }
 
+                // Verify PDF Magic Header (%PDF-)
+                if (typedArray[0] !== 0x25 || typedArray[1] !== 0x50 || typedArray[2] !== 0x44 || typedArray[3] !== 0x46) {
+                    console.error("Magic bytes check failed:", typedArray.slice(0, 4));
+                    throw new Error("Decrypted data is not a valid PDF. This usually happens if the password is wrong.");
+                }
+
                 const blob = new Blob([typedArray], { type: 'application/pdf' });
                 const blobUrl = window.URL.createObjectURL(blob);
                 
-                // Trigger Download (Modern cross-browser approach)
                 const link = document.createElement('a');
                 link.href = blobUrl;
                 link.download = outputName;
@@ -326,19 +341,18 @@
                 document.body.appendChild(link);
                 link.click();
                 
-                // Cleanup
                 setTimeout(() => {
                     document.body.removeChild(link);
                     window.URL.revokeObjectURL(blobUrl);
-                }, 10000);
+                }, 15000);
 
                 btn.innerText = "✅ DOWNLOADED";
             } catch (e) {
-                console.error(e);
+                console.error("Decryption error:", e);
                 alert("DECRYPTION ERROR: " + e.message);
                 btn.innerText = "❌ FAILED";
             } finally {
-                btn.closest('.secret-reveal').classList.remove('loading');
+                container.classList.remove('loading');
                 setTimeout(() => {
                     btn.innerText = originalText;
                     btn.style.pointerEvents = "auto";
