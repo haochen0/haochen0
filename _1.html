@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authorized Access Only</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #007bff;
+            --bg: #050505;
+            --card: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg);
+            color: #fff;
+            font-family: 'Outfit', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Subtle background animation */
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 123, 255, 0.05) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .portal-card {
+            background: var(--card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            padding: 40px;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 350px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease;
+        }
+
+        h1 {
+            font-weight: 600;
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            color: #ccc;
+        }
+
+        input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            padding: 15px;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1.2rem;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+            font-family: monospace;
+            letter-spacing: 4px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 15px rgba(0, 123, 255, 0.2);
+        }
+
+        .hint {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 20px;
+            letter-spacing: 1px;
+        }
+
+        #secret-content {
+            display: none;
+            animation: fadeIn 1s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .secret-reveal {
+            font-size: 1rem;
+            color: var(--primary);
+            line-height: 1.6;
+            margin-top: 20px;
+        }
+
+        .error-shake {
+            animation: shake 0.4s ease;
+            border-color: #ff4757 !important;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="portal-card" id="gatekeeper">
+        <h1>ACCESS GATE</h1>
+        <input type="password" id="access-code" placeholder="000000" maxlength="6">
+        <p class="hint">T-CODE [MMDD+99] REQUIRED</p>
+    </div>
+
+    <div class="portal-card" id="secret-content">
+        <h1>AUTHORIZED</h1>
+        <div class="secret-reveal" id="payload">
+            <!-- You can put your secret links or text here -->
+            <p>Welcome to the inner sanctum.</p>
+            <p style="color: #888; font-size: 0.9rem;">The gate will close when this tab is shut.</p>
+            <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
+            <a href="index.html" style="color: var(--primary); text-decoration: none;">Return to Surface</a>
+        </div>
+    </div>
+
+    <script>
+        const input = document.getElementById('access-code');
+        const gate = document.getElementById('gatekeeper');
+        const content = document.getElementById('secret-content');
+
+        input.addEventListener('input', (e) => {
+            if (e.target.value.length === 6) {
+                checkCode(e.target.value);
+            }
+        });
+
+        function checkCode(code) {
+            // LOGIC: Current Month + Day + "99"
+            // Example: March 16 -> 031699
+            const now = new Date();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const masterCode = month + day + "99";
+
+            if (code === masterCode) {
+                gate.style.display = 'none';
+                content.style.display = 'block';
+            } else {
+                input.classList.add('error-shake');
+                setTimeout(() => {
+                    input.classList.remove('error-shake');
+                    input.value = '';
+                }, 400);
+            }
+        }
+    </script>
+</body>
+</html>
