@@ -148,6 +148,26 @@
         const input = document.getElementById('access-code');
         const gate = document.getElementById('gatekeeper');
         const content = document.getElementById('secret-content');
+        const hintText = document.querySelector('.hint');
+
+        // Logic: Unique 6-digit code that changes every 2 minutes
+        // We use Math.floor(now / 120000) to get 2-minute "ticks"
+        function getMasterCode() {
+            const now = new Date().getTime();
+            const tick = Math.floor(now / 120000); // 120,000ms = 2 mins
+            
+            // Generate a 6-digit deterministic "hash"
+            // Multiply by a large prime (997) to make it look random
+            let hash = (tick * 997) % 1000000;
+            return String(hash).padStart(6, '0');
+        }
+
+        // Timer to update hint or refresh state if needed
+        setInterval(() => {
+            const now = new Date().getTime();
+            const remaining = 120 - Math.floor((now % 120000) / 1000);
+            hintText.innerText = `ROTATING IN ${remaining}s [HASH-SYNC]`;
+        }, 1000);
 
         input.addEventListener('input', (e) => {
             if (e.target.value.length === 6) {
@@ -156,14 +176,9 @@
         });
 
         function checkCode(code) {
-            // LOGIC: Current Month + Day + "99"
-            // Example: March 16 -> 031699
-            const now = new Date();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const masterCode = month + day + "99";
-
-            if (code === masterCode) {
+            const master = getMasterCode();
+            
+            if (code === master) {
                 gate.style.display = 'none';
                 content.style.display = 'block';
             } else {
