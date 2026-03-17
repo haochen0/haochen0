@@ -1,1 +1,26 @@
+name: Build LaTeX PDF
+on: 
+  push:
+    branches:
+      - main  # Trigger whenever you push to the main branch
 
+jobs:
+  build_latex:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Crucial: allows the bot to save the PDF back to your repo
+    steps:
+      - name: Set up Git repository
+        uses: actions/checkout@v4
+
+      - name: Compile LaTeX document
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: report.tex  # Make sure your file is named report.tex
+
+      - name: Upload PDF to Repo (Deploy)
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: .        # Tells it to look in the main folder
+          branch: gh-pages # It will push the compiled PDF to this branch
+          target-folder: pdf-output # Puts it in a subfolder on your site
