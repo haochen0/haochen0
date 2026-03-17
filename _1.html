@@ -187,13 +187,9 @@
 
     <script>
         const gate = document.getElementById('gatekeeper');
-        const gateTitle = document.getElementById('gate-title');
-        const masterStep = document.getElementById('master-pass-step');
-        const totpStep = document.getElementById('totp-step');
-        const masterInput = document.getElementById('master-password');
         const totpInput = document.getElementById('access-code');
         const content = document.getElementById('secret-content');
-        const hintText = totpStep.querySelector('.hint');
+        let hintText = null;
 
         let MASTER_PASS = "";
         let DECRYPTED_TOTP_SECRET = "";
@@ -208,7 +204,8 @@
                 const bytes = CryptoJS.AES.decrypt(ENCRYPTED_VAULT_DATA, pass);
                 const secret = bytes.toString(CryptoJS.enc.Utf8);
 
-                if (!secret) throw new Error("Wrong Password");
+                // CryptoJS returns empty string if decryption fails or salt is missing
+                if (!secret || secret.length < 4) throw new Error("Wrong Password");
 
                 // Success
                 MASTER_PASS = pass;
@@ -217,10 +214,17 @@
                 masterStep.style.display = 'none';
                 totpStep.style.display = 'block';
                 gateTitle.innerText = "IDENTITY CHECK";
+                hintText = totpStep.querySelector('.hint');
                 initTOTP();
             } catch (e) {
+                console.error("Decryption failed:", e);
                 masterInput.classList.add('error-shake');
-                setTimeout(() => masterInput.classList.remove('error-shake'), 400);
+                masterInput.value = "";
+                masterInput.placeholder = "INVALID PASSWORD";
+                setTimeout(() => {
+                    masterInput.classList.remove('error-shake');
+                    masterInput.placeholder = "MASTER PASSWORD";
+                }, 1000);
             }
         }
 
@@ -235,18 +239,25 @@
             });
 
             setInterval(() => {
+                if (!hintText) return;
                 const now = Math.floor(Date.now() / 1000);
                 const remaining = 30 - (now % 30);
-                hintText.innerText = `[${remaining}s] REMAINING`;
+                hintText.innerText = `[${remaining}s] SYNCING...`;
             }, 1000);
 
             totpInput.addEventListener('input', (e) => {
                 if (e.target.value.length === 6) {
-                    if (totp.validate({ token: e.target.value, window: 2 }) !== null) {
+                    // Window: 4 allows for 2 minutes of time drift (crucial for mobile)
+                    if (totp.validate({ token: e.target.value, window: 4 }) !== null) {
                         revealVault();
                     } else {
                         totpInput.classList.add('error-shake');
-                        setTimeout(() => { totpInput.classList.remove('error-shake'); totpInput.value = ''; }, 400);
+                        totpInput.value = "";
+                        totpInput.placeholder = "WRONG CODE";
+                        setTimeout(() => { 
+                            totpInput.classList.remove('error-shake'); 
+                            totpInput.placeholder = "000000";
+                        }, 1000);
                     }
                 }
             });
@@ -303,16 +314,21 @@
                 const blob = new Blob([typedArray], { type: 'application/pdf' });
                 const blobUrl = window.URL.createObjectURL(blob);
                 
-                // Trigger Download
+                // Trigger Download (Modern cross-browser approach)
                 const link = document.createElement('a');
                 link.href = blobUrl;
                 link.download = outputName;
+                link.style.display = 'none';
                 document.body.appendChild(link);
                 link.click();
-                document.body.removeChild(link);
+                
+                // Cleanup
+                setTimeout(() => {
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(blobUrl);
+                }, 10000);
 
                 btn.innerText = "✅ DOWNLOADED";
-                setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
             } catch (e) {
                 console.error(e);
                 alert("DECRYPTION ERROR: " + e.message);
