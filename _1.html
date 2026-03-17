@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -42,8 +43,13 @@
         }
 
         @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         .portal-card {
@@ -55,7 +61,7 @@
             width: 100%;
             max-width: 350px;
             text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
             transition: transform 0.3s ease;
         }
 
@@ -102,8 +108,15 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .secret-reveal {
@@ -119,12 +132,23 @@
         }
 
         @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
         }
     </style>
 </head>
+
 <body>
 
     <div class="portal-card" id="gatekeeper">
@@ -147,7 +171,7 @@
     <!-- Encryption & OTP Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/otpauth@9.2.2/dist/otpauth.umd.min.js"></script>
-    
+
     <script>
         const gate = document.getElementById('gatekeeper');
         const content = document.getElementById('secret-content');
@@ -157,10 +181,9 @@
         let MASTER_PASS = "";
         let DECRYPTED_TOTP_SECRET = "";
 
-        // This is your TOTP secret "NBQXG3DIMEZGS3TH" 
-        // encrypted with a placeholder password "password" 
-        // I will help you update this string with your REAL password soon.
-        const ENCRYPTED_VAULT_DATA = "U2FsdGVkX19DbtC4G8H8mO1T5u1U9YI3P2s9K1F8+3E="; 
+        // TOTP secret encrypted with your Master Password
+        // Ensure this is updated via the encryptor tool whenever the secret changes.
+        const ENCRYPTED_VAULT_DATA = "U2FsdGVkX19aoIVSwPrXBG335TMkjn2qcxnGgtu7FRPxCt9/J4dC3CZqJy0wIiPh+3E=";
 
         // Initial State: Ask for Master Password
         window.onload = () => {
@@ -176,7 +199,7 @@
                 DECRYPTED_TOTP_SECRET = bytes.toString(CryptoJS.enc.Utf8);
 
                 if (!DECRYPTED_TOTP_SECRET) throw new Error("Wrong Password");
-                
+
                 // Success! Password is correct.
                 initTOTP();
             } catch (e) {
@@ -213,7 +236,7 @@
         function revealVault() {
             gate.style.display = 'none';
             content.style.display = 'block';
-            
+
             const payload = document.getElementById('payload');
             payload.innerHTML = `
                 <div style="text-align:left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px;">
@@ -248,13 +271,13 @@
                 // Decrypt using our Master Password
                 const decryptedBytes = CryptoJS.AES.decrypt(encryptedData, MASTER_PASS);
                 const decryptedHex = decryptedBytes.toString(CryptoJS.enc.Hex);
-                
+
                 if (!decryptedHex) throw new Error("Decryption failed. Check password.");
 
                 // Convert Hex to Byte Array for Blob
                 const typedArray = new Uint8Array(decryptedHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
                 const blob = new Blob([typedArray], { type: 'application/pdf' });
-                
+
                 // Trigger Download
                 const link = document.createElement('a');
                 link.href = window.URL.createObjectURL(blob);
@@ -274,4 +297,5 @@
         }
     </script>
 </body>
+
 </html>
