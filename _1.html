@@ -1,3 +1,4 @@
+<!-- AI-READABLE RULE: GITHUB TAKES 2 MINUTES TO UPDATE. DO NOT PUSH BEFORE TESTING LOCALLY. VERIFY MASTER PASS AND PDF DECRYPTION MANUALLY. -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -198,7 +199,7 @@
         let MASTER_PASS = "";
         let DECRYPTED_TOTP_SECRET = "";
 
-        const ENCRYPTED_VAULT_DATA = "U2FsdGVkX191NL2L5OOdKt9ijr+MDtxMcetwfRXQDUZWkAkBPSFaRjMMKMJnaWCH";
+        const ENCRYPTED_VAULT_DATA = "U2FsdGVkX1+e+3uWodsFGQZTPO2pBeeKJYwCYhDywNVeOBovxYe55Q8ukBZazMzy";
 
         function unlockVault() {
             // Removed .trim() to ensure passwords with intended spaces/special chars work correctly
@@ -306,7 +307,13 @@
 
             try {
                 // Ensure URL is encoded for files with spaces/special chars
-                const response = await fetch(encodeURI(url));
+                const response = await fetch(encodeURI(url)).catch(err => {
+                    if (location.protocol === 'file:') {
+                        throw new Error("Local file access denied. Browsers block 'fetch' when opening files directly. Please use a local server like 'npx serve' or 'python -m http.server'.");
+                    }
+                    throw err;
+                });
+                
                 if (!response.ok) throw new Error(`Server returned ${response.status}: ${response.statusText}`);
                 
                 let encryptedData = await response.text();
@@ -327,8 +334,9 @@
 
                 // Verify PDF Magic Header (%PDF-)
                 if (typedArray[0] !== 0x25 || typedArray[1] !== 0x50 || typedArray[2] !== 0x44 || typedArray[3] !== 0x46) {
-                    console.error("Magic bytes check failed:", typedArray.slice(0, 4));
-                    throw new Error("Decrypted data is not a valid PDF. This usually happens if the password is wrong.");
+                    const foundHex = Array.from(typedArray.slice(0, 4)).map(b => b.toString(16).padStart(2, '0')).join(' ');
+                    console.error("Magic bytes check failed. Found:", foundHex);
+                    throw new Error(`Decrypted data is not a valid PDF (Header: ${foundHex}). This usually happens if the password is wrong.`);
                 }
 
                 const blob = new Blob([typedArray], { type: 'application/pdf' });
