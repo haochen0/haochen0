@@ -144,29 +144,29 @@
         </div>
     </div>
 
+    <!-- Load Google Authenticator compatible OTP library -->
+    <script src="https://cdn.jsdelivr.net/npm/otpauth@9.2.2/dist/otpauth.umd.min.js"></script>
     <script>
         const input = document.getElementById('access-code');
         const gate = document.getElementById('gatekeeper');
         const content = document.getElementById('secret-content');
         const hintText = document.querySelector('.hint');
 
-        // Logic: Unique 6-digit code that changes every 2 minutes
-        // We use Math.floor(now / 120000) to get 2-minute "ticks"
-        function getMasterCode() {
-            const now = new Date().getTime();
-            const tick = Math.floor(now / 120000); // 120,000ms = 2 mins
-            
-            // Generate a 6-digit deterministic "hash"
-            // Multiply by a large prime (997) to make it look random
-            let hash = (tick * 997) % 1000000;
-            return String(hash).padStart(6, '0');
-        }
+        // TOTP Configuration (Matches your Google Authenticator setup)
+        const totp = new OTPAuth.TOTP({
+            issuer: "Haochen0",
+            label: "Portal",
+            algorithm: "SHA1",
+            digits: 6,
+            period: 30, // Standard Google Authenticator interval
+            secret: "NBQXG3DIMEZGS3TH", // Your secret key in Base32
+        });
 
-        // Timer to update hint or refresh state if needed
+        // Live Countdown Timer
         setInterval(() => {
-            const now = new Date().getTime();
-            const remaining = 120 - Math.floor((now % 120000) / 1000);
-            hintText.innerText = `ROTATING IN ${remaining}s [HASH-SYNC]`;
+            const now = Math.floor(Date.now() / 1000);
+            const remaining = 30 - (now % 30);
+            hintText.innerText = `SYNCED WITH AUTHENTICATOR [${remaining}s]`;
         }, 1000);
 
         input.addEventListener('input', (e) => {
@@ -176,9 +176,10 @@
         });
 
         function checkCode(code) {
-            const master = getMasterCode();
+            // Validate code with a 1-step window (in case clock is slightly off)
+            const delta = totp.validate({ token: code, window: 1 });
             
-            if (code === master) {
+            if (delta !== null) {
                 gate.style.display = 'none';
                 content.style.display = 'block';
             } else {
