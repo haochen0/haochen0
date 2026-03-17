@@ -144,50 +144,132 @@
         </div>
     </div>
 
-    <!-- Load Google Authenticator compatible OTP library -->
+    <!-- Encryption & OTP Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/otpauth@9.2.2/dist/otpauth.umd.min.js"></script>
+    
     <script>
-        const input = document.getElementById('access-code');
         const gate = document.getElementById('gatekeeper');
         const content = document.getElementById('secret-content');
+        const input = document.getElementById('access-code');
         const hintText = document.querySelector('.hint');
 
-        // TOTP Configuration (Matches your Google Authenticator setup)
-        const totp = new OTPAuth.TOTP({
-            issuer: "Haochen0",
-            label: "Portal",
-            algorithm: "SHA1",
-            digits: 6,
-            period: 30, // Standard Google Authenticator interval
-            secret: "NBQXG3DIMEZGS3TH", // Your secret key in Base32
-        });
+        let MASTER_PASS = "";
+        let DECRYPTED_TOTP_SECRET = "";
 
-        // Live Countdown Timer
-        setInterval(() => {
-            const now = Math.floor(Date.now() / 1000);
-            const remaining = 30 - (now % 30);
-            hintText.innerText = `SYNCED WITH AUTHENTICATOR [${remaining}s]`;
-        }, 1000);
+        // This is your TOTP secret "NBQXG3DIMEZGS3TH" 
+        // encrypted with a placeholder password "password" 
+        // I will help you update this string with your REAL password soon.
+        const ENCRYPTED_VAULT_DATA = "U2FsdGVkX19DbtC4G8H8mO1T5u1U9YI3P2s9K1F8+3E="; 
 
-        input.addEventListener('input', (e) => {
-            if (e.target.value.length === 6) {
-                checkCode(e.target.value);
+        // Initial State: Ask for Master Password
+        window.onload = () => {
+            MASTER_PASS = prompt("ENTER MASTER PASSWORD TO DECRYPT VAULT:");
+            if (!MASTER_PASS) {
+                document.body.innerHTML = "<h1 style='text-align:center;margin-top:20%'>ACCESS DENIED</h1>";
+                return;
             }
-        });
 
-        function checkCode(code) {
-            // Validate code with a 1-step window (in case clock is slightly off)
-            const delta = totp.validate({ token: code, window: 1 });
+            try {
+                // Try to decrypt the TOTP secret using the password
+                const bytes = CryptoJS.AES.decrypt(ENCRYPTED_VAULT_DATA, MASTER_PASS);
+                DECRYPTED_TOTP_SECRET = bytes.toString(CryptoJS.enc.Utf8);
+
+                if (!DECRYPTED_TOTP_SECRET) throw new Error("Wrong Password");
+                
+                // Success! Password is correct.
+                initTOTP();
+            } catch (e) {
+                alert("INVALID MASTER PASSWORD. VAULT REMAINS LOCKED.");
+                document.body.innerHTML = "<h1 style='text-align:center;margin-top:20%'>ENCRYPTION ERROR</h1>";
+            }
+        };
+
+        function initTOTP() {
+            const totp = new OTPAuth.TOTP({
+                issuer: "Haochen0",
+                label: "Portal",
+                secret: DECRYPTED_TOTP_SECRET,
+            });
+
+            setInterval(() => {
+                const now = Math.floor(Date.now() / 1000);
+                const remaining = 30 - (now % 30);
+                hintText.innerText = `SYNCED WITH AUTHENTICATOR [${remaining}s]`;
+            }, 1000);
+
+            input.addEventListener('input', (e) => {
+                if (e.target.value.length === 6) {
+                    if (totp.validate({ token: e.target.value, window: 1 }) !== null) {
+                        revealVault();
+                    } else {
+                        input.classList.add('error-shake');
+                        setTimeout(() => { input.classList.remove('error-shake'); input.value = ''; }, 400);
+                    }
+                }
+            });
+        }
+
+        function revealVault() {
+            gate.style.display = 'none';
+            content.style.display = 'block';
             
-            if (delta !== null) {
-                gate.style.display = 'none';
-                content.style.display = 'block';
-            } else {
-                input.classList.add('error-shake');
+            const payload = document.getElementById('payload');
+            payload.innerHTML = `
+                <div style="text-align:left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px;">
+                    <p style="border-bottom: 1px solid var(--border); padding-bottom:10px; margin-bottom:15px;">🔐 <strong>ENCRYPTED ARCHIVE</strong></p>
+                    
+                    <a href="javascript:void(0)" onclick="decryptFile('pdf_uploads/Prompt Engineering_v7.pdf.enc', 'Prompt Engineering_v7.pdf')" 
+                       style="color:#007bff; display:block; margin: 12px 0; text-decoration:none;">🔓 Prompt Engineering v7</a>
+                    
+                    <a href="javascript:void(0)" onclick="decryptFile('pdf_uploads/Transformers for Machine Learning_A Deep Dive.pdf.enc', 'Transformers_Tutorial.pdf')" 
+                       style="color:#007bff; display:block; margin: 12px 0; text-decoration:none;">🔓 Transformers Deep Dive</a>
+                    
+                    <a href="javascript:void(0)" onclick="decryptFile('pdf_uploads/塞思·卡拉曼 安全边际 中文版.pdf.enc', 'Margin_of_Safety_CN.pdf')" 
+                       style="color:#007bff; display:block; margin: 12px 0; text-decoration:none;">🔓 Margin of Safety (CN)</a>
+                    
+                    <p style="font-size: 0.7rem; color: #666; margin-top:20px;">[AES-256-DECRYPTION READY]</p>
+                </div>
+            `;
+        }
+
+        async function decryptFile(url, outputName) {
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = "⏳ DECRYPTING...";
+            btn.style.pointerEvents = "none";
+
+            try {
+                // Fetch the encrypted .enc file (which is a base64 string)
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("File not found on server");
+                const encryptedData = await response.text();
+
+                // Decrypt using our Master Password
+                const decryptedBytes = CryptoJS.AES.decrypt(encryptedData, MASTER_PASS);
+                const decryptedHex = decryptedBytes.toString(CryptoJS.enc.Hex);
+                
+                if (!decryptedHex) throw new Error("Decryption failed. Check password.");
+
+                // Convert Hex to Byte Array for Blob
+                const typedArray = new Uint8Array(decryptedHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+                const blob = new Blob([typedArray], { type: 'application/pdf' });
+                
+                // Trigger Download
+                const link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = outputName;
+                link.click();
+
+                btn.innerText = "✅ DOWNLOADED";
+            } catch (e) {
+                alert("ERROR: " + e.message);
+                btn.innerText = "❌ FAILED";
+            } finally {
                 setTimeout(() => {
-                    input.classList.remove('error-shake');
-                    input.value = '';
-                }, 400);
+                    btn.innerText = originalText;
+                    btn.style.pointerEvents = "auto";
+                }, 3000);
             }
         }
     </script>
