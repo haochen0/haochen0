@@ -187,24 +187,35 @@
 
         // Initial State: Ask for Master Password
         window.onload = () => {
-            MASTER_PASS = prompt("ENTER MASTER PASSWORD TO DECRYPT VAULT:");
-            if (!MASTER_PASS) {
+            let pass = prompt("ENTER MASTER PASSWORD TO DECRYPT VAULT:");
+            if (!pass) {
                 document.body.innerHTML = "<h1 style='text-align:center;margin-top:20%'>ACCESS DENIED</h1>";
+                return;
+            }
+            
+            MASTER_PASS = pass.trim(); // Handle accidental spaces
+
+            try {
+                // 1. Attempt Decryption
+                const bytes = CryptoJS.AES.decrypt(ENCRYPTED_VAULT_DATA, MASTER_PASS);
+                DECRYPTED_TOTP_SECRET = bytes.toString(CryptoJS.enc.Utf8);
+
+                if (!DECRYPTED_TOTP_SECRET) {
+                    throw new Error("Incorrect Password");
+                }
+            } catch (e) {
+                alert("❌ INVALID MASTER PASSWORD. VAULT REMAINS LOCKED.");
+                document.body.innerHTML = "<h1 style='text-align:center;margin-top:20%'>ENCRYPTION ERROR</h1>";
                 return;
             }
 
             try {
-                // Try to decrypt the TOTP secret using the password
-                const bytes = CryptoJS.AES.decrypt(ENCRYPTED_VAULT_DATA, MASTER_PASS);
-                DECRYPTED_TOTP_SECRET = bytes.toString(CryptoJS.enc.Utf8);
-
-                if (!DECRYPTED_TOTP_SECRET) throw new Error("Wrong Password");
-
-                // Success! Password is correct.
+                // 2. Initialize TOTP (Separate block to catch malformed secrets)
                 initTOTP();
             } catch (e) {
-                alert("INVALID MASTER PASSWORD. VAULT REMAINS LOCKED.");
-                document.body.innerHTML = "<h1 style='text-align:center;margin-top:20%'>ENCRYPTION ERROR</h1>";
+                console.error(e);
+                alert("❌ VAULT DECRYPTED BUT AUTHENTICATOR FAILED [Check TOTP Secret Format]");
+                document.body.innerHTML = "<h1 style='text-align:center;margin-top:20%'>AUTHENTICATION ERROR</h1>";
             }
         };
 
