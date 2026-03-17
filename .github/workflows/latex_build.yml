@@ -16,16 +16,16 @@ jobs:
       - name: Compile LaTeX Document
         uses: xu-cheng/latex-action@v3
         with:
-          # Match the new filename here
           root_file: Macro_Structural_Dynamics_2026.tex
 
-      - name: Rename PDF for Clarity
-        run: mv Macro_Structural_Dynamics_2026.pdf Alabama_Trap_Analysis_2026.pdf
+      - name: Manual Folder Organization
+        run: |
+          mkdir -p research_assets
+          cp Macro_Structural_Dynamics_2026.pdf research_assets/Alabama_Trap_Analysis_2026.pdf
 
-      - name: Deploy PDF to Research Folder
+      - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: . 
-          branch: gh-pages
-          # This organizes all future PDFs into one clean folder
-          target-folder: research_assets
+          folder: .        # Deploys index.html to the ROOT
+          branch: gh-pages # To the gh-pages branch
+          clean: true      # Wipes out the old "messy" files
