@@ -1,26 +1,31 @@
-name: Build LaTeX PDF
+name: Build Research PDF
 on: 
   push:
     branches:
-      - main  # Trigger whenever you push to the main branch
+      - main
 
 jobs:
   build_latex:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # Crucial: allows the bot to save the PDF back to your repo
+      contents: write
     steps:
-      - name: Set up Git repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Compile LaTeX document
+      - name: Compile LaTeX Document
         uses: xu-cheng/latex-action@v3
         with:
-          root_file: report.tex  # Make sure your file is named report.tex
+          # Match the new filename here
+          root_file: Macro_Structural_Dynamics_2026.tex
 
-      - name: Upload PDF to Repo (Deploy)
+      - name: Rename PDF for Clarity
+        run: mv Macro_Structural_Dynamics_2026.pdf Alabama_Trap_Analysis_2026.pdf
+
+      - name: Deploy PDF to Research Folder
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: .        # Tells it to look in the main folder
-          branch: gh-pages # It will push the compiled PDF to this branch
-          target-folder: pdf-output # Puts it in a subfolder on your site
+          folder: . 
+          branch: gh-pages
+          # This organizes all future PDFs into one clean folder
+          target-folder: research_assets
