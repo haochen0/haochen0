@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Vault Encryptor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #121212; color: #eee; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .container { background: #1e1e1e; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 400px; text-align: center; }
+        input[type="password"] { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #333; background: #252525; color: white; box-sizing: border-box; }
+        .drop-zone { border: 2px dashed #444; padding: 40px; margin-top: 20px; border-radius: 12px; cursor: pointer; transition: 0.3s; }
+        .drop-zone:hover { border-color: #007bff; background: rgba(0,123,255,0.05); }
+        h1 { font-size: 1.2rem; margin-bottom: 20px; color: #007bff; }
+        .status { margin-top: 20px; font-size: 0.9rem; color: #888; }
+        ul { list-style: none; padding: 0; text-align: left; }
+        li { background: #252525; padding: 8px 12px; margin: 5px 0; border-radius: 4px; font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>SECURE ENCRYPTOR</h1>
+    <p style="font-size: 0.8rem; color: #666;">Step 1: Set Master Password</p>
+    <input type="password" id="password" placeholder="Enter Master Password">
+    
+    <div class="drop-zone" id="drop-zone">
+        <p>Step 2: Drop PDFs Here</p>
+        <span style="font-size: 0.7rem; color: #555;">(Will download .enc versions)</span>
+    </div>
+
+    <div class="status" id="status">Ready</div>
+    <ul id="file-list"></ul>
+    
+    <div style="margin-top:20px; border-top: 1px solid #333; padding-top:20px;">
+        <p style="font-size: 0.7rem; color: #666;">Step 3: Encrypt Authenticator Key</p>
+        <input type="text" id="plain-totp" value="NBQXG3DIMEZGS3TH" style="width:100%; padding:8px; background:#252525; border:1px solid #333; color:#aaa; font-size:0.8rem; border-radius:5px;">
+        <button onclick="encryptTOTP()" style="margin-top:10px; padding:10px 20px; background:#007bff; color:white; border:none; border-radius:5px; cursor:pointer;">Generate Scrambled Block</button>
+        <div id="scrambled-block" style="margin-top:10px; font-size:0.6rem; word-break:break-all; color:#00ff00; background:#000; padding:5px; display:none;"></div>
+    </div>
+</div>
+
+<script>
+    const dropZone = document.getElementById('drop-zone');
+    const passwordInput = document.getElementById('password');
+    const fileList = document.getElementById('file-list');
+    const status = document.getElementById('status');
+
+    dropZone.onclick = () => {
+        let input = document.createElement('input');
+        input.type = 'file';
+        input.multiple = true;
+        input.onchange = e => handleFiles(e.target.files);
+        input.click();
+    };
+
+    dropZone.ondragover = e => { e.preventDefault(); dropZone.style.borderColor = '#007bff'; };
+    dropZone.ondragleave = () => { dropZone.style.borderColor = '#444'; };
+    dropZone.ondrop = e => {
+        e.preventDefault();
+        dropZone.style.borderColor = '#444';
+        handleFiles(e.dataTransfer.files);
+    };
+
+    async function handleFiles(files) {
+        const password = passwordInput.value;
+        if (!password) { alert("Please enter a Master Password first!"); return; }
+
+        status.innerText = "Encrypting...";
+        for (let file of files) {
+            const li = document.createElement('li');
+            li.innerText = `🔒 ${file.name}`;
+            fileList.appendChild(li);
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const wordArray = CryptoJS.lib.WordArray.create(e.target.result);
+                const encrypted = CryptoJS.AES.encrypt(wordArray, password).toString();
+                
+                download(encrypted, `${file.name}.enc`);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        status.innerText = "Done! Check Downloads.";
+    }
+
+    function download(data, filename) {
+        const blob = new Blob([data], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+    }
+
+    function encryptTOTP() {
+        const pass = passwordInput.value;
+        const totp = document.getElementById('plain-totp').value;
+        if (!pass) { alert("Enter password first!"); return; }
+        
+        const encrypted = CryptoJS.AES.encrypt(totp, pass).toString();
+        const box = document.getElementById('scrambled-block');
+        box.innerText = encrypted;
+        box.style.display = 'block';
+        alert("Copy this green text into your _1.html ENCRYPTED_VAULT_DATA variable.");
+    }
+</script>
+
+</body>
+</html>
