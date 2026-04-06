@@ -3,3 +3,6 @@ id_ed25519_haochen0*
 pdf_uploads/*.pdf
 !pdf_uploads/*.enc
 !pdf_uploads/.gitkeep
+*.md
+output/
+tmp/

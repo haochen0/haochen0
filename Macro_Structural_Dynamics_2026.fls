@@ -168,8 +168,6 @@ INPUT /opt/texlive/texdir/texmf-dist/tex/latex/tcolorbox/tcbraster.code.tex
 INPUT /opt/texlive/texdir/texmf-dist/tex/latex/tcolorbox/tcbskins.code.tex
 INPUT /opt/texlive/texdir/texmf-dist/tex/latex/tikzfill/tikzfill.image.sty
 INPUT /opt/texlive/texdir/texmf-dist/tex/latex/tikzfill/tikzfill.image.sty
-INPUT /opt/texlive/texdir/texmf-dist/tex/latex/tikzfill/tikzfill-common.sty
-INPUT /opt/texlive/texdir/texmf-dist/tex/latex/tikzfill/tikzfill-common.sty
 INPUT /opt/texlive/texdir/texmf-dist/tex/latex/tikzfill/tikzlibraryfill.image.code.tex
 INPUT /opt/texlive/texdir/texmf-dist/tex/latex/tikzfill/tikzlibraryfill.image.code.tex
 INPUT /opt/texlive/texdir/texmf-dist/tex/latex/tcolorbox/tcbskinsjigsaw.code.tex
