@@ -6,3 +6,19 @@ pdf_uploads/*.pdf
 *.md
 output/
 tmp/
+
+# Local runtime state and secrets
+data/
+__pycache__/
+*.pyc
+*.pyo
+*.env
+.telegram.env
+.zprofile
+.zprofile.*
+.zshrc
+.zshrc.*
+*.bak.*
+telegram_local_interface/
+launchd/
+scripts/
