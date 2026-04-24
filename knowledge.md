@@ -4,6 +4,7 @@
 - P0 | Trigger: 用户连续纠偏 / 局部修改 / 想继续加层 | Rule: 先回到核心契约，不先加层；只接受缩小契约偏差的改动 | Action: 复述目标、输入、输出、边界；若改动只会让方案更完整、不会让主链路更直接，回滚到最小主链路 | Failure: wrapper、状态、常驻、side effect 增加 | Recovery: 停优化，回到主链路
 - P0 | Trigger: 需要网络检索 / web lookup / source gathering，且适合拆成独立 side task | Rule: 优先把检索子任务下发给 `spawn_agent`，模型默认用 `gpt-5.1-codex-mini`；主线程只保留约束、判断与整合 | Action: 先检查 skill 和 `knowledge.md` 是否已有现成 workflow，再让检索子代理回收来源、时间点和原文链接，最后由主线程做结论 | Failure: 主线程直接下场做重检索、或用更重模型跑轻量检索 | Recovery: 收回为 `gpt-5.1-codex-mini` 检索子任务，再由主线程复核整合
 - P0 | Trigger: 需要多方案、独立审查、或防上下文污染 | Rule: 先抽共享约束，主线只处理共享部分；subagent 只做互不重叠的增量输出或独立复核 | Action: 单文件改写、单结论判断优先主线程；只有子任务能独立产出时才开 `subagents` | Failure: 为并行而并行，重复解释同一前提 | Recovery: 收回到主线程或只开必要子任务
+- P1 | Trigger: Git 操作报 `.git/index.lock` / repo metadata 写入失败，且原因是工具沙箱而不是仓库本身 | Rule: 不要反复重试；先明确告诉用户“这是沙箱阻塞，不是 Git 命令本身错了”，再把可在本地终端直接运行的命令给用户执行 | Action: 解释为什么卡住，列出精确命令，让用户在本地 shell 完成 `git rm --cached` / `commit` / `push` | Failure: 在沙箱里空转重试、或把本地可执行步骤继续留给模型 | Recovery: 停止重试，转交给用户本地终端
 - P0 | Trigger: 同时在做“原始需求 / 当前改动 / 修改建议”比对，或用户要求 n+1 / 独立回答 / 独立审查 | Rule: 先做三方对照，再决定改不改、怎么改；knowledge.md 只负责记忆规则，不替代当前回合执行 | Action: 当前回合需要的 gate 先执行，n+1 的额外 1 个子任务负责独立回答 + 审查；三者不对齐时先重写建议 | Failure: 只写规则不执行，或直接进入实现 | Recovery: 重新对齐三方输入
 - P0 | Trigger: 用户明确要求 n+1 / 独立审查，即使任务看起来只是单文件维护 | Rule: 显式 n+1 优先于“单文件改写优先主线程”的低风险启发式；先开独立复核，再进入修改 | Action: 先让一个子任务独立判断，再由主线程落盘 | Failure: 把显式 n+1 降级成普通维护任务 | Recovery: 补做独立复核后再改
 - P0 | Trigger: 调度 `spawn_agent` | Rule: 只能传 `message` 或 `items`，不能同时传 | Action: 先选一种载荷再发 | Failure: 参数校验失败 | Recovery: 重发为单一载荷
