@@ -1,9 +1,11 @@
-id_ed25519_haochen0*
 .DS_Store
-pdf_uploads/*.pdf
-!pdf_uploads/*.enc
+id_ed25519_haochen0*
+research_assets/
+*.pdf
 !pdf_uploads/.gitkeep
+!pdf_uploads/*.pdf.enc
 *.md
+!AGENTS.md
 !knowledge.md
 output/
 tmp/
@@ -24,6 +26,5 @@ telegram_local_interface/
 launchd/
 scripts/
 ai_index_report_2026.pdf
-arena_leaderboard.html
 codex-pro-max/
 python_libs/
