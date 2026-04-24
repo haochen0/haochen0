@@ -1,0 +1,31 @@
+name: Build Research PDF
+on: 
+  push:
+    branches:
+      - main
+
+jobs:
+  build_latex:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Compile LaTeX Document
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: Macro_Structural_Dynamics_2026.tex
+
+      - name: Manual Folder Organization
+        run: |
+          mkdir -p research_assets
+          cp Macro_Structural_Dynamics_2026.pdf research_assets/Alabama_Trap_Analysis_2026.pdf
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: .        # Deploys index.html to the ROOT
+          branch: gh-pages # To the gh-pages branch
+          clean: true      # Wipes out the old "messy" files

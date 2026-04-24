@@ -1,0 +1,373 @@
+<!-- AI-READABLE RULE: GITHUB TAKES 2 MINUTES TO UPDATE. DO NOT PUSH BEFORE TESTING LOCALLY. VERIFY MASTER PASS AND PDF DECRYPTION MANUALLY. -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authorized Access Only</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #007bff;
+            --bg: #050505;
+            --card: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg);
+            color: #fff;
+            font-family: 'Outfit', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Subtle background animation */
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 123, 255, 0.05) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .portal-card {
+            background: var(--card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            padding: 40px;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 350px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease;
+        }
+
+        h1 {
+            font-weight: 600;
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            color: #ccc;
+        }
+
+        input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            padding: 15px;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1.2rem;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+            font-family: monospace;
+            letter-spacing: 4px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 15px rgba(0, 123, 255, 0.2);
+        }
+
+        .hint {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 20px;
+            letter-spacing: 1px;
+        }
+
+        #secret-content {
+            display: none;
+            animation: fadeIn 1s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .secret-reveal {
+            font-size: 1rem;
+            color: var(--primary);
+            line-height: 1.6;
+            margin-top: 20px;
+        }
+
+        .error-shake {
+            animation: shake 0.4s ease;
+            border-color: #ff4757 !important;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
+        }
+
+        /* Loading skeleton */
+        .loading {
+            position: relative;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="portal-card" id="gatekeeper">
+        <h1 id="gate-title">VAULT LOCKED</h1>
+        <div id="master-pass-step">
+            <input type="password" id="master-password" placeholder="MASTER PASSWORD" style="letter-spacing: 1px; margin-bottom: 20px;">
+            <button onclick="unlockVault()" style="background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 600; width: 100%;">UNLOCK GATE</button>
+        </div>
+        <div id="totp-step" style="display: none;">
+            <input type="password" id="access-code" placeholder="000000" maxlength="6">
+            <p class="hint">SYNCING AUTHENTICATOR...</p>
+        </div>
+    </div>
+
+    <div class="portal-card" id="secret-content">
+        <h1>AUTHORIZED</h1>
+        <div class="secret-reveal" id="payload">
+            <!-- You can put your secret links or text here -->
+            <p>Welcome to the inner sanctum.</p>
+            <p style="color: #888; font-size: 0.9rem;">The gate will close when this tab is shut.</p>
+            <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
+            <a href="index.html" style="color: var(--primary); text-decoration: none;">Return to Surface</a>
+        </div>
+    </div>
+
+    <!-- Encryption & OTP Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/otpauth@9.2.2/dist/otpauth.umd.min.js"></script>
+
+    <script>
+        const gate = document.getElementById('gatekeeper');
+        const totpInput = document.getElementById('access-code');
+        const content = document.getElementById('secret-content');
+        const gateTitle = document.getElementById('gate-title');
+        const masterStep = document.getElementById('master-pass-step');
+        const totpStep = document.getElementById('totp-step');
+        const masterInput = document.getElementById('master-password');
+        let hintText = null;
+
+        let MASTER_PASS = "";
+        let DECRYPTED_TOTP_SECRET = "";
+
+        const ENCRYPTED_VAULT_DATA = "U2FsdGVkX1+e+3uWodsFGQZTPO2pBeeKJYwCYhDywNVeOBovxYe55Q8ukBZazMzy";
+
+        function unlockVault() {
+            // Removed .trim() to ensure passwords with intended spaces/special chars work correctly
+            const pass = masterInput.value;
+            if (!pass) return;
+
+            try {
+                const bytes = CryptoJS.AES.decrypt(ENCRYPTED_VAULT_DATA, pass);
+                const secret = bytes.toString(CryptoJS.enc.Utf8);
+
+                // CryptoJS returns empty string if decryption fails or salt is missing
+                if (!secret || secret.length < 4) throw new Error("Wrong Password or Invalid Secret");
+
+                // Success
+                MASTER_PASS = pass;
+                DECRYPTED_TOTP_SECRET = secret;
+                
+                masterStep.style.display = 'none';
+                totpStep.style.display = 'block';
+                gateTitle.innerText = "IDENTITY CHECK";
+                hintText = totpStep.querySelector('.hint');
+                initTOTP();
+            } catch (e) {
+                console.error("Decryption failed:", e);
+                masterInput.classList.add('error-shake');
+                masterInput.value = "";
+                masterInput.placeholder = "INVALID PASSWORD";
+                setTimeout(() => {
+                    masterInput.classList.remove('error-shake');
+                    masterInput.placeholder = "MASTER PASSWORD";
+                }, 1000);
+            }
+        }
+
+        // Allow Enter key
+        masterInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') unlockVault(); });
+
+        function initTOTP() {
+            const totp = new OTPAuth.TOTP({
+                issuer: "Haochen0",
+                label: "Portal",
+                secret: DECRYPTED_TOTP_SECRET,
+            });
+
+            setInterval(() => {
+                if (!hintText) return;
+                const now = Math.floor(Date.now() / 1000);
+                const remaining = 30 - (now % 30);
+                hintText.innerText = `[${remaining}s] SYNCING...`;
+            }, 1000);
+
+            totpInput.addEventListener('input', (e) => {
+                if (e.target.value.length === 6) {
+                    // Window: 4 allows for 2 minutes of time drift (crucial for mobile)
+                    if (totp.validate({ token: e.target.value, window: 4 }) !== null) {
+                        revealVault();
+                    } else {
+                        totpInput.classList.add('error-shake');
+                        totpInput.value = "";
+                        totpInput.placeholder = "WRONG CODE";
+                        setTimeout(() => { 
+                            totpInput.classList.remove('error-shake'); 
+                            totpInput.placeholder = "000000";
+                        }, 1000);
+                    }
+                }
+            });
+        }
+
+        function revealVault() {
+            gate.style.display = 'none';
+            content.style.display = 'block';
+
+            const payload = document.getElementById('payload');
+            payload.innerHTML = `
+                <div style="text-align:left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px;">
+                    <p style="border-bottom: 1px solid var(--border); padding-bottom:10px; margin-bottom:15px;">🔐 <strong>ENCRYPTED ARCHIVE</strong></p>
+                    
+                    <a href="javascript:void(0)" onclick="handleDecryptClick(event, 'pdf_uploads/Prompt Engineering_v7.pdf.enc', 'Prompt Engineering_v7.pdf')" 
+                       style="color:#007bff; display:block; margin: 12px 0; text-decoration:none;">🔓 Prompt Engineering v7</a>
+                    
+                    <a href="javascript:void(0)" onclick="handleDecryptClick(event, 'pdf_uploads/Transformers for Machine Learning_A Deep Dive.pdf.enc', 'Transformers_Tutorial.pdf')" 
+                       style="color:#007bff; display:block; margin: 12px 0; text-decoration:none;">🔓 Transformers Deep Dive</a>
+                    
+                    <a href="javascript:void(0)" onclick="handleDecryptClick(event, 'pdf_uploads/塞思·卡拉曼 安全边际 中文版.pdf.enc', 'Margin_of_Safety_CN.pdf')" 
+                       style="color:#007bff; display:block; margin: 12px 0; text-decoration:none;">🔓 Margin of Safety (CN)</a>
+                    
+                    <p style="font-size: 0.7rem; color: #666; margin-top:20px;">[AES-256-DECRYPTION READY]</p>
+                </div>
+            `;
+        }
+
+        // Wrapper to pass the event object safely
+        function handleDecryptClick(e, url, outputName) {
+            decryptFile(url, outputName, e.currentTarget || e.target);
+        }
+
+        async function decryptFile(url, outputName, btn) {
+            if (!btn) return;
+            const originalText = btn.innerText;
+            btn.innerText = "⏳ DECRYPTING...";
+            btn.style.pointerEvents = "none";
+            const container = btn.closest('.secret-reveal') || document.getElementById('payload');
+            container.classList.add('loading');
+
+            try {
+                // Ensure URL is encoded for files with spaces/special chars
+                const response = await fetch(encodeURI(url)).catch(err => {
+                    if (location.protocol === 'file:') {
+                        throw new Error("Local file access denied. Browsers block 'fetch' when opening files directly. Please use a local server like 'npx serve' or 'python -m http.server'.");
+                    }
+                    throw err;
+                });
+                
+                if (!response.ok) throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                
+                let encryptedData = await response.text();
+                encryptedData = encryptedData.trim(); // Remove any trailing/leading whitespace
+
+                // Decrypt using our Master Password
+                const decrypted = CryptoJS.AES.decrypt(encryptedData, MASTER_PASS);
+                
+                const l = decrypted.sigBytes;
+                if (l <= 0) throw new Error("Decryption failed. Please verify your Master Password or file integrity.");
+                
+                // Efficient WordArray to Uint8Array conversion
+                const words = decrypted.words;
+                const typedArray = new Uint8Array(l);
+                for (let i = 0; i < l; i++) {
+                    typedArray[i] = (words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
+                }
+
+                // Verify PDF Magic Header (%PDF-)
+                if (typedArray[0] !== 0x25 || typedArray[1] !== 0x50 || typedArray[2] !== 0x44 || typedArray[3] !== 0x46) {
+                    const foundHex = Array.from(typedArray.slice(0, 4)).map(b => b.toString(16).padStart(2, '0')).join(' ');
+                    console.error("Magic bytes check failed. Found:", foundHex);
+                    throw new Error(`Decrypted data is not a valid PDF (Header: ${foundHex}). This usually happens if the password is wrong.`);
+                }
+
+                const blob = new Blob([typedArray], { type: 'application/pdf' });
+                const blobUrl = window.URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = outputName;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                
+                setTimeout(() => {
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(blobUrl);
+                }, 15000);
+
+                btn.innerText = "✅ DOWNLOADED";
+            } catch (e) {
+                console.error("Decryption error:", e);
+                alert("DECRYPTION ERROR: " + e.message);
+                btn.innerText = "❌ FAILED";
+            } finally {
+                container.classList.remove('loading');
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.pointerEvents = "auto";
+                }, 3000);
+            }
+        }
+    </script>
+</body>
+
+</html>
