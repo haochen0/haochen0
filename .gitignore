@@ -27,3 +27,10 @@ scripts/
 ai_index_report_2026.pdf
 codex-pro-max/
 python_libs/
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
