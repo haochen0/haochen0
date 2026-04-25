@@ -5,7 +5,6 @@ research_assets/
 !pdf_uploads/.gitkeep
 !pdf_uploads/*.pdf.enc
 *.md
-!AGENTS.md
 !knowledge.md
 output/
 tmp/
